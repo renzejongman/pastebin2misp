@@ -1,0 +1,6 @@
+README.md
+setup.py
+pastebin2misp.egg-info/PKG-INFO
+pastebin2misp.egg-info/SOURCES.txt
+pastebin2misp.egg-info/dependency_links.txt
+pastebin2misp.egg-info/top_level.txt
