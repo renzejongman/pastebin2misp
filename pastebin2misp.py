@@ -8,16 +8,18 @@
 ##                      Tip: on the first run, change 'self.misp.publish(event)' on line 102 to 'self.misp.fast_publish(event)',
 ##                      That will prevent everyone from receiving tons of emails on the firts run.
 
-import logging, requests, bs4, re, shelve
+import logging, requests, bs4, re, shelve, os
 from pymisp     import PyMISP
-from keys       import misp_url, misp_key
+from keys       import misp_url, misp_key, path, alerting
 from iocparser  import IOCParser
+
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logging.debug("Starting the Pastebin scraper.")
 parsedPaste     = []
 usernames       = []
 toScrape        = []
+os.chdir(path)
 
 try:
     shelfFile   = shelve.open('knownpastes')
@@ -56,7 +58,7 @@ class paste:
         parseObject = IOCParser(self.code)
         self.iocs   = (parseObject.parse())
         logging.debug("parsed {} IOC's from paste: {}".format(len(self.iocs), self.title))
-        logging.debug("for example: the first IOC is a {}, and has value {}".format(self.iocs[0].kind, self.iocs[1].value))
+        #logging.debug("for example: the first IOC is a {}, and has value {}".format(self.iocs[0].kind, self.iocs[0].value))
 
 
 
@@ -99,7 +101,7 @@ class generateEvents():
                         pass
                     if self.paste[i].iocs[j].kind   == "email":
                         self.misp.add_email_src(event, self.paste[i].iocs[j].value)
-                self.misp.publish(event)
+                self.misp.publish(event, alert=alerting)
 
 
 
@@ -147,6 +149,6 @@ logging.debug("Found {} new pastes.".format(len(newPastes)))
 for i in range(len(newPastes)):
     newPastes[i].scrape()
     newPastes[i].iocs()
-    x = generateEvents(newPastes)
-    x.initMISP()
-    x.addEvents()
+x = generateEvents(newPastes)
+x.initMISP()
+x.addEvents()
