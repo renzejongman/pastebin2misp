@@ -2,7 +2,7 @@
 ## IOCParser: scrapes IOC's from freetext.
 
 import re, logging, argparse
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class IOC:
     # a simple class with a value for the type (kind) of IOC and the actual value of the IOC.
@@ -11,18 +11,31 @@ class IOC:
         self.kind   = kind
         self.value  = value
 
+def check(kind):
+    f       = open(kind, "r")
+    y     = []      
+    for line in f:
+        y.append(line.rstrip())
+    f.close()
+    return("|".join(y)[:-1])
+    return str(y)
+
 
 class IOCParser:
     # takes a text and returns IOCs found in that text as a list of IOC-objects.
  
-    
-    ipRegex         = ["IP", re.compile('[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}')]
-    uriRegex        = ["uri", re.compile(r'\b((http.\/\/)?[a-zA-Z0-9]{2,}[\.][a-zA-Z]{2,5}[\S]*)\b')]
-    md5Regex        = ["md5", re.compile(r'\b[a-f0-9]{32}\b|\b[A-F0-9]{32}\b')]
-    sha1Regex       = ["sha1", re.compile(r'\b[a-f0-9]{40}\b|\b[A-F0-9]{40}\b')]
-    sha256Regex     = ["sha256", re.compile(r'\b[0-9a-z]{64}\b|\b[0-9A-Z]{64}\b')]
-    CVERegex        = ["CVE", re.compile(r'\b(CVE[\-]?[0-9]{4}\-[0-9]{3,6})\b')]
-    emailRegex      = ["email", re.compile(r'\b[a-zA-Z0-9\+\_\-]+[@][a-zA-Z0-9\+\_\-]+[.][a-zA-Z]{2,6}\b')]
+
+
+
+    ipRegex         = ["IP",        re.compile(r'(([0-9]{1,3}\.){3}[0-9]{1,3})')]
+    uriRegex        = ["uri",       re.compile('\\b((http.\\/\\/)?[a-zA-Z0-9]{2,}[\\.](?:' + check("tlds") + ')[\\S]*)\\b', re.I)]
+    md5Regex        = ["md5",       re.compile(r'\b(([a-f0-9]{32}\b|\b[A-F0-9]{32}))\b')]
+    sha1Regex       = ["sha1",      re.compile(r'\b(([a-f0-9]{40}\b|\b[A-F0-9]{40}))\b')]
+    sha256Regex     = ["sha256",    re.compile(r'\b(([0-9a-z]{64}\b|\b[0-9A-Z]{64}))\b')]
+    CVERegex        = ["CVE",       re.compile(r'\b((CVE[\-]?[0-9]{4}\-[0-9]{3,6}))\b')]
+    emailRegex      = ["email",     re.compile(r'\b(([a-zA-Z0-9\+\_\-]+[@][a-zA-Z0-9\+\_\-]+[.][a-zA-Z]{2,6}))\b')]
+    fileRegex       = ["filename",  re.compile('(([a-zA-Z0-9\\.-_])+[\\.](' + check("extensions") + '))\\b', re.I)]
+
 
 
     def __init__(self, text):
@@ -30,24 +43,18 @@ class IOCParser:
         self.text = re.sub(r'hxxp',r'http',self.text)
 
 
+
     def parse(self):
         iocs = []
-        regexes = [self.ipRegex, self.uriRegex, self.md5Regex, self.sha1Regex, self.sha256Regex, self.CVERegex, self.emailRegex]
+        regexes = [self.ipRegex, self.uriRegex, self.md5Regex, self.sha1Regex, self.sha256Regex, self.CVERegex, self.emailRegex, self.fileRegex]
         for i in range(len(regexes)):
             logging.debug("Now scanning for {}s".format(regexes[i][0]))
-            
-            if regexes[i] == self.uriRegex:
-            #uri's are a special case because it is the only regex with groups. Bit ugly but will fix later.
-                rule = []
-                rawRule = regexes[i][1].findall(self.text)
-                logging.debug(rawRule)
-                for x in range(len(rawRule)):
-                    rule.append(rawRule[x][0])
-                    logging.debug("Found {} {}s".format(len(rule), regexes[i][0]))
-            else:
-                rule = regexes[i][1].findall(self.text)
-                logging.debug("Found {} {}s".format(len(rule), regexes[i][0]))
-            
+            rule    = []
+            rawRule = regexes[i][1].findall(self.text)
+
+            for x in range(len(rawRule)):
+                rule.append(rawRule[x][0])
+           
             for j in range(len(rule)):
                 iocs.append(IOC(regexes[i][0], rule[j]))
                 logging.debug("Adding {} as a {}".format(rule[j], regexes[i][0]))
@@ -86,6 +93,10 @@ if __name__ == "__main__":
     g.close()
     logging.info("Closed {}.".format(args.destination))
     logging.info("FInishing IOCParser.")
+    logging.debug(check("extensions"))
+
+
+
 
 
 #a = IOCParser(theText)
