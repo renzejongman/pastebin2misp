@@ -93,13 +93,7 @@ if __name__ == "__main__":
     g.close()
     logging.info("Closed {}.".format(args.destination))
     logging.info("FInishing IOCParser.")
-    logging.debug(check("extensions"))
 
 
-
-
-
-#a = IOCParser(theText)
-#print(a.parse())
 
 

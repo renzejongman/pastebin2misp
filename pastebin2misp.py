@@ -101,6 +101,9 @@ class generateEvents():
                         pass
                     if self.paste[i].iocs[j].kind   == "email":
                         self.misp.add_email_src(event, self.paste[i].iocs[j].value)
+                    if self.paste[i].iocs[j].kind   == "filename":
+                        self.misp.add_filename(event, self.paste[i].iocs[j].value)
+
                 self.misp.publish(event, alert=alerting)
 
 
@@ -149,6 +152,8 @@ logging.debug("Found {} new pastes.".format(len(newPastes)))
 for i in range(len(newPastes)):
     newPastes[i].scrape()
     newPastes[i].iocs()
+
 x = generateEvents(newPastes)
 x.initMISP()
 x.addEvents()
+
