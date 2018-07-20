@@ -8,14 +8,18 @@
 ##                      Tip: on the first run, change 'self.misp.publish(event)' on line 102 to 'self.misp.fast_publish(event)',
 ##                      That will prevent everyone from receiving tons of emails on the firts run.
 
-import logging, requests, bs4, re, shelve, os
+import logging, requests, bs4, re, shelve, os, sys
 from pymisp     import PyMISP
-from keys       import misp_url, misp_key, path, alerting
+from keys       import *
 from iocparser  import IOCParser
 
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
-logging.debug("Starting the Pastebin scraper.")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.info("Starting the Pastebin scraper.")
+
+# Setting the directory path:
+absolutePath 	= os.path.abspath(__file__)
+path		= os.path.dirname(absolutePath)
 parsedPaste     = []
 usernames       = []
 toScrape        = []
@@ -67,8 +71,8 @@ class generateEvents():
 
     def __init__(self, paste):
         self.paste  = paste
-        self.url    = misp_url
-        self.key    = misp_key
+        self.url    = MISP_URL
+        self.key    = MISP_KEY
 
 
     def initMISP(self):
@@ -103,12 +107,8 @@ class generateEvents():
                         self.misp.add_email_src(event, self.paste[i].iocs[j].value)
                     if self.paste[i].iocs[j].kind   == "filename":
                         self.misp.add_filename(event, self.paste[i].iocs[j].value)
-
-                self.misp.publish(event, alert=alerting)
-
-
-
-
+                if PUBLISH_EVENTS:
+                    self.misp.publish(event, alert=EMAIL_ALERTS)
 
 
 def pasteRegex():
